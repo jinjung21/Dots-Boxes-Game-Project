@@ -23,6 +23,7 @@
 #define GREY 0xC618
 #define PINK 0xFC18
 #define ORANGE 0xFC00
+#define BLACK 0x0000
 
 /* Screen size. */
 #define RESOLUTION_X 320
@@ -45,7 +46,8 @@ void clear_screen();
 
 void plot_grid(int x, int y, short int line_color); //Prints the game board and the current score for both players to the screen.
 void add_score();
-void print_num(); //Print number 0~16
+void print_red_num(int num); //Print score of red team from 0~9
+void print_blue_num(int num); //Print score of blue team from 0~9
 void print_turn(); //Print "RED turn" or "BLUE turn"
 bool is_valid(bool is_horizontal, int x, int y); //True if the selected line is unoccupied.
 void apply_move(bool is_horizontal, int x, int y); //If valid, color that line with the respective color.
@@ -122,8 +124,139 @@ void clear_screen() {
 }
 
 void plot_grid(int x, int y, short int line_color); //Prints the game board and the current score for both players to the screen.
-void add_score();
-void print_num(); //Print number 0~16
+void add_score(){
+
+}
+void print_red_num(int num){ // print score
+    //print ":"
+    draw_horizontal(269, 78, 271, BLACK);
+    draw_horizontal(269, 79, 271, BLACK);
+    draw_horizontal(269, 82, 271, BLACK);
+    draw_horizontal(269, 83, 271, BLACK);
+
+    if (num == 0){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+        draw_vertical(230, 45, 116, BLACK);
+        draw_vertical(265, 45, 116, BLACK);
+    }
+    else if (num == 1){
+        draw_vertical(265, 45, 116, BLACK);
+    }
+    else if (num == 2){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_vertical(265, 45, 80, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(230, 80, 116, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+    }
+    else if (num == 3){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_vertical(265, 45, 80, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(265, 80, 116, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+    }
+    else if (num == 4){
+        draw_vertical(230, 45, 80, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(265, 45, 116, BLACK);
+    }
+    else if (num == 5){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_vertical(230, 45, 80, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(265, 80, 116, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+    }
+    else if (num == 6){
+        draw_vertical(230, 45, 116, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(265, 80, 116, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+    }
+    else if (num == 7){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_vertical(265, 45, 116, BLACK);
+    }
+    else if (num == 8){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_horizontal(230, 116, 265, BLACK);
+        draw_vertical(230, 45, 116, BLACK);
+        draw_vertical(265, 45, 116, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+    }
+    else if (num == 9){
+        draw_horizontal(230, 45, 265, BLACK);
+        draw_vertical(230, 45, 80, BLACK);
+        draw_horizontal(230, 80, 265, BLACK);
+        draw_vertical(265, 45, 116, BLACK);
+    }
+
+}
+
+void print_blue_num(int num){ // print score
+
+    if (num == 0){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+        draw_vertical(274, 45, 116, BLACK);
+        draw_vertical(309, 45, 116, BLACK);
+    }
+    else if (num == 1){
+        draw_vertical(309, 45, 116, BLACK);
+    }
+    else if (num == 2){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_vertical(309, 45, 80, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(274, 80, 116, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+    }
+    else if (num == 3){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_vertical(309, 45, 80, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(309, 80, 116, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+    }
+    else if (num == 4){
+        draw_vertical(274, 45, 80, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(309, 45, 116, BLACK);
+    }
+    else if (num == 5){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_vertical(274, 45, 80, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(309, 80, 116, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+    }
+    else if (num == 6){
+        draw_vertical(274, 45, 116, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(309, 80, 116, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+    }
+    else if (num == 7){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_vertical(309, 45, 116, BLACK);
+    }
+    else if (num == 8){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_horizontal(274, 116, 309, BLACK);
+        draw_vertical(274, 45, 116, BLACK);
+        draw_vertical(309, 45, 116, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+    }
+    else if (num == 9){
+        draw_horizontal(274, 45, 309, BLACK);
+        draw_vertical(274, 45, 80, BLACK);
+        draw_horizontal(274, 80, 309, BLACK);
+        draw_vertical(309, 45, 116, BLACK);
+    }
+
+}
 void print_turn(); //Print "RED turn" or "BLUE turn"
 bool is_valid(bool is_horizontal, int x, int y); //True if the selected line is unoccupied.
 void apply_move(bool is_horizontal, int x, int y); //If valid, color that line with the respective color.

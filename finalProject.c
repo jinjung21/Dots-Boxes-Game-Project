@@ -120,3 +120,11 @@ void clear_screen() {
         }
     }
 }
+
+void plot_grid(int x, int y, short int line_color); //Prints the game board and the current score for both players to the screen.
+void add_score();
+void print_num(); //Print number 0~16
+void print_turn(); //Print "RED turn" or "BLUE turn"
+bool is_valid(bool is_horizontal, int x, int y); //True if the selected line is unoccupied.
+void apply_move(bool is_horizontal, int x, int y); //If valid, color that line with the respective color.
+void fill_box(); //Color in the box with the respective color.

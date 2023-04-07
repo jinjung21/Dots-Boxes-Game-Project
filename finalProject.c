@@ -36,49 +36,10 @@
 
 bool is_horizontal;
 bool valid;
-int turn = 0; // 0 if red turn, 1 if blue turn
+int turn; // 0 if red turn, 1 if blue turn
 int score;
 
-bool is_occupied0;
-bool is_occupied1;
-bool is_occupied2;
-bool is_occupied3;
-bool is_occupied4;
-bool is_occupied5;
-bool is_occupied6;
-bool is_occupied7;
-bool is_occupied8;
-bool is_occupied9;
-bool is_occupied10;
-bool is_occupied11;
-bool is_occupied12;
-bool is_occupied13;
-bool is_occupied14;
-bool is_occupied15;
-bool is_occupied16;
-bool is_occupied17;
-bool is_occupied18;
-bool is_occupied19;
-bool is_occupied20;
-bool is_occupied21;
-bool is_occupied22;
-bool is_occupied23;
-bool is_occupied24;
-bool is_occupied25;
-bool is_occupied26;
-bool is_occupied27;
-bool is_occupied28;
-bool is_occupied29;
-bool is_occupied30;
-bool is_occupied31;
-bool is_occupied32;
-bool is_occupied33;
-bool is_occupied34;
-bool is_occupied35;
-bool is_occupied36;
-bool is_occupied37;
-bool is_occupied38;
-bool is_occupied39;
+bool is_occupied[40] = {0};
 
 void plot_pixel(int x, int y, short int line_color);
 void draw_horizontal(int x0, int y, int x1, short int line_color);
@@ -93,8 +54,7 @@ void add_score();
 void print_red_num(int num); // Print score of red team from 0~9
 void print_blue_num(int num); // Print score of blue team from 0~9
 void print_turn(int turn); // Print "RED turn" or "BLUE turn"
-bool is_valid(bool is_horizontal, int x, int y); // True if the selected line is unoccupied.
-void apply_move(bool is_horizontal, int x, int y); // If valid, color that line with the respective color.
+void apply_move(bool is_horizontal, int x, int y, short int color); // If valid, color that line with the respective color.
 void fill_box(int x, int y, short int color); // Color in the box with the respective color.
 
 volatile int pixel_buffer_start;
@@ -123,9 +83,6 @@ int main(void)
         clear_screen();
 
         plot_grid();
-        //print_turn(0);
-        //print_red_num(5);
-        //print_blue_num(3);
 
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
@@ -245,11 +202,12 @@ void plot_grid()
     draw_horizontal(269, 79, 271, BLACK);
     draw_horizontal(269, 82, 271, BLACK);
     draw_horizontal(269, 83, 271, BLACK);
-    print_turn(turn);
 }
+
 void add_score()
 {
 }
+
 void print_red_num(int num)
 { // print score
     if (num == 0) {
@@ -356,14 +314,17 @@ void print_blue_num(int num)
         draw_vertical(309, 45, 116, BLUE);
     }
 }
+
 void print_turn(int turn){ // Print "RED turn" or "BLUE turn"
     //print "TURN"
     draw_horizontal(231, 175, 245, BLACK); // print "T"
     draw_vertical(238, 175, 204, BLACK);
 
-    draw_vertical(252, 175, 204, BLACK); // print "U"
-    draw_horizontal(252, 154, 266, BLACK);
-    draw_vertical(266, 175, 204, BLACK);
+    draw_vertical(252, 185, 204, BLACK); // print "U"
+    draw_horizontal(252, 204, 266, BLACK);
+    draw_vertical(266, 185, 204, BLACK);
+	draw_vertical(252, 175, 178, BLACK);
+	draw_vertical(266, 175, 178, BLACK);
 
     draw_vertical(273, 175, 204, BLACK); // print "R"
     draw_horizontal(273, 175, 287, BLACK);
@@ -376,50 +337,184 @@ void print_turn(int turn){ // Print "RED turn" or "BLUE turn"
     draw_vertical(308, 175, 204, BLACK);
 
     if (turn == 0){ // print "RED"
-        draw_vertical(241, 125, 154, RED); // print "R"
-        draw_horizontal(241, 125, 255, RED);
-        draw_vertical(255, 125, 139, RED);
-        draw_horizontal(241, 139, 255, RED);
-        draw_line(241, 139, 255, 154, RED);
+        draw_vertical(241, 135, 164, RED); // print "R"
+        draw_horizontal(241, 135, 255, RED);
+        draw_vertical(255, 135, 149, RED);
+        draw_horizontal(241, 149, 255, RED);
+        draw_line(241, 149, 255, 164, RED);
 
-        draw_vertical(263, 125, 154, RED); // print "E"
-        draw_horizontal(263, 125, 277, RED);
-        draw_horizontal(263, 139, 277, RED);
-        draw_horizontal(263, 154, 277, RED);
+        draw_vertical(263, 135, 164, RED); // print "E"
+        draw_horizontal(263, 135, 277, RED);
+        draw_horizontal(263, 149, 277, RED);
+        draw_horizontal(263, 164, 277, RED);
 
-        draw_vertical(284, 125, 154, RED); // print "D"
-        draw_horizontal(284, 125, 291, RED);
-        draw_line(291, 125, 298, 132, RED);
-        draw_vertical(298, 132, 147, RED);
-        draw_line(291, 154, 298, 147, RED);
-        draw_horizontal(284, 154, 291, RED);
-
+        draw_vertical(284, 135, 164, RED); // print "D"
+        draw_horizontal(284, 135, 291, RED);
+        draw_line(291, 135, 298, 142, RED);
+        draw_vertical(298, 142, 157, RED);
+        draw_line(291, 164, 298, 157, RED);
+        draw_horizontal(284, 164, 291, RED);
     }
-    else if (turn ==1){ // print "BLUE"
-        draw_vertical(231, 125, 154, BLUE); // print "B"
-        draw_vertical(245, 125, 154, BLUE);
-        draw_horizontal(231, 125, 245, BLUE);
-        draw_horizontal(231, 139, 245, BLUE);
-        draw_horizontal(231, 154, 245, BLUE);
+    else if (turn == 1){ // print "BLUE"
+        draw_vertical(231, 135, 164, BLUE); // print "B"
+        draw_vertical(245, 135, 164, BLUE);
+        draw_horizontal(231, 135, 245, BLUE);
+        draw_horizontal(231, 149, 245, BLUE);
+        draw_horizontal(231, 164, 245, BLUE);
 
-        draw_vertical(252, 125, 154, BLUE); // print "L"
-        draw_horizontal(252, 154, 266, BLUE);
+        draw_vertical(252, 135, 164, BLUE); // print "L"
+        draw_horizontal(252, 164, 266, BLUE);
 
-        draw_vertical(273, 125, 154, BLUE); // print "U"
-        draw_horizontal(273, 154, 287, BLUE);
-        draw_vertical(287, 125, 154, BLUE);
+        draw_vertical(273, 135, 164, BLUE); // print "U"
+        draw_horizontal(273, 164, 287, BLUE);
+        draw_vertical(287, 135, 164, BLUE);
 
-        draw_vertical(294, 125, 154, BLUE); // print "E"
-        draw_horizontal(294, 125, 308, BLUE);
-        draw_horizontal(294, 139, 308, BLUE);
-        draw_horizontal(294, 154, 308, BLUE);
-
+        draw_vertical(294, 135, 164, BLUE); // print "E"
+        draw_horizontal(294, 135, 308, BLUE);
+        draw_horizontal(294, 149, 308, BLUE);
+        draw_horizontal(294, 164, 308, BLUE);
     }
 }
-// bool is_valid(bool is_horizontal, int x, int y) { //True if the selected line is unoccupied.
-// }
-// void apply_move(bool is_horizontal, int x, int y) { //If valid, color that line with the respective color.
-// }
+
+void apply_move(bool is_horizontal, int x, int y, short int color) { //If valid, color that line with the respective color.
+    int i = 0;
+    if (is_horizontal) {
+        if (x == 20 && y == 20) {
+            i = 0;
+        }
+        else if (x == 70 && y == 20) {
+            i = 1;
+        }
+        else if (x == 120 && y == 20) {
+            i = 2;
+        }
+        else if (x == 170 && y == 20) {
+            i = 3;
+        }
+        else if (x == 20 && y == 70) {
+            i = 4;
+        }
+        else if (x == 70 && y == 70) {
+            i = 5;
+        }
+        else if (x == 120 && y == 70) {
+            i = 6;
+        }
+        else if (x == 170 && y == 70) {
+            i = 7;
+        }
+        else if (x == 20 && y == 120) {
+            i = 8;
+        }
+        else if (x == 70 && y == 120) {
+            i = 9;
+        }
+        else if (x == 120 && y == 120) {
+            i = 10;
+        }
+        else if (x == 170 && y == 120) {
+            i = 11;
+        }
+        else if (x == 20 && y == 170) {
+            i = 12;
+        }
+        else if (x == 70 && y == 170) {
+            i = 13;
+        }
+        else if (x == 120 && y == 170) {
+            i = 14;
+        }
+        else if (x == 170 && y == 170) {
+            i = 15;
+        }
+        else if (x == 20 && y == 220) {
+            i = 16;
+        }
+        else if (x == 70 && y == 220) {
+            i = 17;
+        }
+        else if (x == 120 && y == 220) {
+            i = 18;
+        }
+        else if (x == 170 && y == 220) {
+            i = 19;
+        }
+    }
+    else if (!is_horizontal) {
+        if (x == 20 && y == 20) {
+            i = 20;
+        }
+        else if (x == 20 && y == 70) {
+            i = 21;
+        }
+        else if (x == 20 && y == 120) {
+            i = 22;
+        }
+        else if (x == 20 && y == 170) {
+            i = 23;
+        }
+        else if (x == 70 && y == 20) {
+            i = 24;
+        }
+        else if (x == 70 && y == 70) {
+            i = 25;
+        }
+        else if (x == 70 && y == 120) {
+            i = 26;
+        }
+        else if (x == 770 && y == 170) {
+            i = 27;
+        }
+        else if (x == 120 && y == 20) {
+            i = 28;
+        }
+        else if (x == 120 && y == 70) {
+            i = 29;
+        }
+        else if (x == 120 && y == 120) {
+            i = 30;
+        }
+        else if (x == 120 && y == 170) {
+            i = 31;
+        }
+        else if (x == 170 && y == 20) {
+            i = 32;
+        }
+        else if (x == 170 && y == 70) {
+            i = 33;
+        }
+        else if (x == 170 && y == 120) {
+            i = 34;
+        }
+        else if (x == 170 && y == 170) {
+            i = 35;
+        }
+        else if (x == 220 && y == 20) {
+            i = 36;
+        }
+        else if (x == 220 && y == 70) {
+            i = 37;
+        }
+        else if (x == 220 && y == 120) {
+            i = 38;
+        }
+        else if (x == 220 && y == 170) {
+            i = 39;
+        }
+    }
+
+    if (!(is_occupied[i])) {
+        if (is_horizontal) {
+            draw_horizontal(x, y, x + 50, color);
+            is_occupied[i] = true;
+        } 
+        else if (!is_horizontal) {
+            draw_vertical(x, y, y + 50, color);
+            is_occupied[i] = true;
+        }
+    }
+}
+
 void fill_box(int x, int y, short int color)
 { // Color in the box with the respective color.
     for (int i = x; i < x + 50; i++) {

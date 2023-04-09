@@ -36,8 +36,15 @@
 
 bool is_horizontal;
 bool valid;
-int turn; // 0 if red turn, 1 if blue turn
-int score;
+int* turn; // 0 if red turn, 1 if blue turn
+int score_red;
+int score_blue;
+short int color;
+int x;
+int y;
+int delX;
+int delY;
+char byte1, byte2, byte3;
 
 bool is_occupied[40] = {0};
 
@@ -50,20 +57,33 @@ void wait_for_vsync();
 void clear_screen();
 
 void plot_grid(); // Prints the game board.
-void add_score();
+void add_score(bool is_horizontal, int x, int y, short int color, int i);
 void print_red_num(int num); // Print score of red team from 0~9
 void print_blue_num(int num); // Print score of blue team from 0~9
 void print_turn(int turn); // Print "RED turn" or "BLUE turn"
-void apply_move(bool is_horizontal, int x, int y, short int color); // If valid, color that line with the respective color.
+void apply_move(bool is_horizontal, int x, int y, short int color, int* turn); // If valid, color that line with the respective color.
 void fill_box(int x, int y, short int color); // Color in the box with the respective color.
+void display_line(bool is_horizontal, int x, int y, short int color); // Display line preview 
+void read_key(unsigned char *pressed_key);
+// void config_GIC (void);
+// void config_KEYs (void);
 
 volatile int pixel_buffer_start;
 
 int main(void)
 {
     volatile int* pixel_ctrl_ptr = (int*)0xFF203020;
-    // declare other variables(not shown)
-    // initialize location and direction of rectangles(not shown)
+
+    *turn = 0;
+    color = RED;
+    score_red = 0;
+    score_blue = 0;
+    is_horizontal = 1;
+    x = 20;
+    y = 20;
+    delX = 0;
+    delY = 0;
+    unsigned char *pressed_key = 0;
 
     /* set front pixel buffer to start of FPGA On-chip memory */
     *(pixel_ctrl_ptr + 1) = 0xC8000000; // first store the address in the
@@ -78,11 +98,91 @@ int main(void)
     pixel_buffer_start = *(pixel_ctrl_ptr + 1); // we draw on the back buffer
     clear_screen(); // pixel_buffer_start points to the pixel buffer
 
+    // config_GIC(); // configure the general interrupt controller
+    // config_KEYs(); // configure KEYs to generate interrupts
+
     while (1) {
         /* Erase any boxes and lines that were drawn in the last iteration */
         clear_screen();
 
         plot_grid();
+        print_red_num(score_red);
+        print_blue_num(score_blue);
+        print_turn(*turn);
+
+        if (*turn == 0)
+            color = RED;
+        else if (*turn == 1)
+            color = BLUE;
+
+        while (pressed_key != 0x5A) {
+            display_line(is_horizontal, x, y, color);
+
+            if ((SW_BASE & 0x01) == 1) {
+                is_horizontal = false;
+            } else {
+                is_horizontal = true;
+            }
+
+            if (!is_horizontal) { // Vertical
+                if (pressed_key == 0xE074) { // right key
+                    if (x < 220) {
+                        delX = 50;
+                        delY = 0;
+                    }
+                }
+                if (pressed_key == 0xE06B) { // left key
+                    if (x > 20) {
+                        delX = -50;
+                        delY = 0;
+                    }
+                }
+                if (pressed_key == 0xE075) { // up key
+                    if (y > 20) {
+                        delX = 0;
+                        delY = -50;
+                    }
+                }
+                if (pressed_key == 0xE072) { // down key
+                    if (y < 170) {
+                        delX = 0;
+                        delY = 50;
+                    }
+                }
+            } else if (is_horizontal) { // Horizontal
+                if (pressed_key == 0xE074) { // right key
+                    if (x < 170) {
+                        delX = 50;
+                        delY = 0;
+                    }
+                }
+                if (pressed_key == 0xE06B) { // left key
+                    if (x > 20) {
+                        delX = -50;
+                        delY = 0;
+                    }
+                }
+                if (pressed_key == 0xE075) { // up key
+                    if (y > 20) {
+                        delX = 0;
+                        delY = -50;
+                    }
+                }
+                if (pressed_key == 0xE072) { // down key
+                    if (y < 220) {
+                        delX = 0;
+                        delY = 50;
+                    }
+                }         
+            }
+            
+            x += delX;
+            y += delY;
+
+            read_key(&pressed_key);
+        }	
+
+        apply_move(is_horizontal, x, y, color, turn);
 
         wait_for_vsync(); // swap front and back buffers on VGA vertical sync
         pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
@@ -184,8 +284,6 @@ void clear_screen()
 
 void plot_grid()
 { // Prints the game board.
-    clear_screen();
-
     for (int i = 20; i < 220; i++) {
         plot_pixel(i, 20, BLACK);
         plot_pixel(i, 70, BLACK);
@@ -204,8 +302,159 @@ void plot_grid()
     draw_horizontal(269, 83, 271, BLACK);
 }
 
-void add_score()
-{
+void add_score(bool is_horizontal, int x, int y, short int color, int i) {
+    int r = 0;
+    int b = 0;
+    if (color == RED){
+        r = 1;
+    }
+    else if (color == BLUE){
+        b = 1;
+    }
+
+    if (is_horizontal){
+        if (y == 20){
+            if (is_occupied[i+4] && is_occupied[i+20] && is_occupied[i+21]){
+                score_red += r;
+                score_blue += b;
+            }
+        }
+        else if (y == 70){
+            if (is_occupied[i-4] && is_occupied[i+16] && is_occupied[i+17]){
+                score_red += r;
+                score_blue += b;
+            }
+            else if (is_occupied[i+4] && is_occupied[i+21] && is_occupied[i+22]){
+                score_red += r;
+                score_blue += b;
+            }
+        }
+        else if (y == 120){
+            if (is_occupied[i-4] && is_occupied[i+17] && is_occupied[i+18]){
+                score_red += r;
+                score_blue += b;
+            }
+            else if (is_occupied[i+4] && is_occupied[i+22] && is_occupied[i+23]){
+                score_red += r;
+                score_blue += b;
+            }
+        }
+        else if (y == 170){
+            if (is_occupied[i-4] && is_occupied[i+18] && is_occupied[i+19]){
+                score_red += r;
+                score_blue += b;
+            }
+            else if (is_occupied[i+4] && is_occupied[i+23] && is_occupied[i+24]){
+                score_red += r;
+                score_blue += b;
+            }
+        }
+        else if (y == 220){
+            if (is_occupied[i-4] && is_occupied[i+19] && is_occupied[i+20]){
+                score_red += r;
+                score_blue += b;
+            }
+        }
+    }
+
+    else if (!is_horizontal){
+        if (y == 20){
+            if (x == 20){
+                if (is_occupied[i+1] && is_occupied[i-20] && is_occupied[i-16]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 70 || x == 120 || x == 170){
+                if (is_occupied[i+1] && is_occupied[i-20] && is_occupied[i-16]){
+                score_red += r;
+                score_blue += b;
+                }
+                else if (is_occupied[i-1] && is_occupied[i-21] && is_occupied[i-17]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 220){
+                if (is_occupied[i-1] && is_occupied[i-21] && is_occupied[i-17]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+        }
+        else if (y == 70){
+            if (x == 20){
+                if (is_occupied[i+1] && is_occupied[i-21] && is_occupied[i-17]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 70 || x == 120 || x == 170){
+                if (is_occupied[i+1] && is_occupied[i-21] && is_occupied[i-17]){
+                score_red += r;
+                score_blue += b;
+                }
+                else if (is_occupied[i-1] && is_occupied[i-22] && is_occupied[i-18]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 220){
+                if (is_occupied[i-1] && is_occupied[i-22] && is_occupied[i-18]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+        }
+        else if (y == 120){
+            if (x == 20){
+                if (is_occupied[i+1] && is_occupied[i-22] && is_occupied[i-18]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 70 || x == 120 || x == 170){
+                if (is_occupied[i+1] && is_occupied[i-22] && is_occupied[i-18]){
+                score_red += r;
+                score_blue += b;
+                }
+                else if (is_occupied[i-1] && is_occupied[i-23] && is_occupied[i-19]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 220){
+                if (is_occupied[i-1] && is_occupied[i-23] && is_occupied[i-19]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+        }
+        else if (y == 170){
+            if (x == 20){
+                if (is_occupied[i+1] && is_occupied[i-23] && is_occupied[i-19]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 70 || x == 120 || x == 170){
+                if (is_occupied[i+1] && is_occupied[i-23] && is_occupied[i-19]){
+                score_red += r;
+                score_blue += b;
+                }
+                else if (is_occupied[i-1] && is_occupied[i-24] && is_occupied[i-20]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+            else if (x == 220){
+                if (is_occupied[i-1] && is_occupied[i-24] && is_occupied[i-20]){
+                score_red += r;
+                score_blue += b;
+                }
+            }
+        }
+    }
 }
 
 void print_red_num(int num)
@@ -376,8 +625,8 @@ void print_turn(int turn){ // Print "RED turn" or "BLUE turn"
     }
 }
 
-void apply_move(bool is_horizontal, int x, int y, short int color) { //If valid, color that line with the respective color.
-    int i = 0;
+void apply_move(bool is_horizontal, int x, int y, short int color, int* turn) { //If valid, color that line with the respective color.
+    int i;
     if (is_horizontal) {
         if (x == 20 && y == 20) {
             i = 0;
@@ -512,6 +761,7 @@ void apply_move(bool is_horizontal, int x, int y, short int color) { //If valid,
             draw_vertical(x, y, y + 50, color);
             is_occupied[i] = true;
         }
+        *turn = *(turn) ^ 1; // xor
     }
 }
 
@@ -522,4 +772,97 @@ void fill_box(int x, int y, short int color)
             plot_pixel(i, j, color);
         }
     }
+}
+
+void display_line(bool is_horizontal, int x, int y, short int color) {
+    if (is_horizontal){
+        for (int i = x; i < x + 46; i = i + 8){
+            draw_horizontal(i, y, i + 3, color);
+        }
+    }
+    else if (!is_horizontal){
+        for (int i = y; i < y + 46; i = i + 8){
+            draw_vertical(x, i, i + 3, color);
+        }
+    }
+}
+
+void read_key(unsigned char *pressed_key) {
+	volatile int* PS2_ptr = (int *) 0xFF200100;
+	int data = *PS2_ptr;
+	*pressed_key = data & 0xFF;
+
+	while (data & 0x8000) {
+		data = *PS2_ptr;
+	}
+}
+
+void config_KEYs()
+{
+volatile int * PS2_Control = (int *) 0xFF200104;
+ *PS2_Control = 0x00000001; 
+}
+
+void __attribute__ ((interrupt)) __cs3_isr_irq (void)
+{
+// Read the ICCIAR from the CPU Interface in the GIC
+int interrupt_ID = *((int *) 0xFFFEC10C);
+if (interrupt_ID == 79) // check if interrupt is from the KEYs
+pushbutton_ISR ();
+else
+while (1); // if unexpected, then stay here
+// Write to the End of Interrupt Register (ICCEOIR)
+*((int *) 0xFFFEC110) = interrupt_ID;
+}
+
+void config_GIC(void) {
+config_interrupt (79, 1); // configure the FPGA KEYs interrupt (73)
+// Set Interrupt Priority Mask Register (ICCPMR). Enable all priorities
+*((int *) 0xFFFEC104) = 0xFFFF;
+// Set the enable in the CPU Interface Control Register (ICCICR)
+*((int *) 0xFFFEC100) = 1;
+// Set the enable in the Distributor Control Register (ICDDCR)
+*((int *) 0xFFFED000) = 1;
+}
+
+void config_interrupt (int N, int CPU_target)
+{
+int reg_offset, index, value, address;
+/* Configure the Interrupt Set-Enable Registers (ICDISERn).
+* reg_offset = (integer_div(N / 32) * 4; value = 1 << (N mod 32) */
+reg_offset = (N >> 3) & 0xFFFFFFFC;
+index = N & 0x1F;
+value = 0x1 << index;
+address = 0xFFFED100 + reg_offset;
+/* Using the address and value, set the appropriate bit */
+*(int *)address |= value;
+/* Configure the Interrupt Processor Targets Register (ICDIPTRn)
+* reg_offset = integer_div(N / 4) * 4; index = N mod 4 */
+reg_offset = (N & 0xFFFFFFFC);
+index = N & 0x3;
+address = 0xFFFED800 + reg_offset + index;
+/* Using the address and value, write to (only) the appropriate byte */
+*(char *)address = (char) CPU_target;
+}
+
+void pushbutton_ISR( void ){
+    volatile int * PS2_Control = (int *) 0xFF200104;
+    *PS2_Control = 1;  // clear RI 
+    
+    volatile int * PS2_keyboard_ptr = (int *)0xFF200100;
+    int PS2_data, RVALID;
+
+    PS2_data = *(PS2_keyboard_ptr); // read the Data register in the PS/2 port
+    RVALID = PS2_data & 0x8000; // extract the RVALID field
+    if (RVALID){
+        byte1 = byte2;
+        byte2 = byte3;
+        byte3 = PS2_data & 0xFF;
+        if ((byte3==0x23) && (byte2==0xF0)){//case start
+
+        }
+
+        }
+    }
+    return;
 }
